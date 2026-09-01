@@ -52,3 +52,21 @@ jobs:
       - name: Push SHA Image
         run: |
           docker push ghcr.io/hiteshguptagt/hello-spring:${IMAGE_TAG}
+
+      - name: Update GitOps Repository
+        env:
+          GITOPS_TOKEN: ${{ secrets.GITOPS_TOKEN }}
+        run: |
+          git clone https://x-access-token:${GITOPS_TOKEN}@github.com/hiteshguptagt/hello-world-gitops.git
+          
+          cd hello-world-gitops
+
+          sed -i "s|image: ghcr.io/hiteshguptagt/hello-spring:.*|image: ghcr.io/hiteshguptagt/hello-spring:${IMAGE_TAG}|" \
+            workloads/hello-world/base/deployment.yaml
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add workloads/hello-world/base/deployment.yaml
+          git commit -m "Update hello-spring image to ${IMAGE_TAG}"
+          git push origin main
